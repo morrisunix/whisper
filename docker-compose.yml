@@ -1,0 +1,41 @@
+###########################################################################################
+# File: docker-compose.yml
+# Date: 01/17/23
+# Created by: Mauricio Tovar
+# Info: This Docke Compose file creates three images:
+#       - whisper: Open-AI Server
+#       - nginx: Reverse proxy for TLS
+#       - certbot: Request free TLS certs from Let's Encrypt
+#
+###########################################################################################
+
+version: '3.7'
+
+services:
+  whisper:
+    build:
+      context: .
+      dockerfile: Dockerfile-whisper
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./code:/usr/src/whisper
+
+  nginx:
+    depends_on:
+      - whisper
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+

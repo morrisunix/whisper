@@ -1,0 +1,28 @@
+###########################################################################################
+# File: Dockerfile-whisper
+# Date: 01/17/23
+# Created by: Mauricio Tovar
+# Info: This Dockerfile creates a functional Whisper image with all
+#       its dependencies.
+#
+###########################################################################################
+
+FROM python:3
+
+WORKDIR /usr/src/whisper
+
+COPY requirements.txt ./
+RUN apt update \
+    && apt install -y wget ffmpeg \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+ENV CODA_DIR=/opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh \
+    && /bin/bash ~/miniconda.sh -b -p /opt/conda
+RUN /opt/conda/bin/conda install -c pytorch torchaudio torchvision
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV PATH="${CONDA_DIR}/bin:${PATH}"
+
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+CMD [ "streamlit", "run", "streamlit_whisper.py" ]
